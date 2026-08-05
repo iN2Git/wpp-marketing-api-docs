@@ -1,0 +1,337 @@
+openapi: 3.0.3
+info:
+  title: WhatsApp Business API - WPP Marketing
+  description: |
+    WPP Marketing is a platform for automating WhatsApp Business messages.
+
+    With this API you can:
+    - Send text messages.
+    - Send media files (images, documents, etc).
+    - Retrieve webhook delivery logs.
+    - Retrieve sent message logs.
+
+    For more information, visit [https://wppmarketing.com/developers](https://wppmarketing.com/developers)
+  version: 1.0.0
+
+
+servers:
+  # Added by API Auto Mocking Plugin
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/wppmarketing/WPP/1.0.0
+  - url: https://api.wppmarketing.com
+
+paths:
+  /send-text:
+    post:
+      summary: Send Text Message
+      description: Sends a plain text message to a WhatsApp number.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TextMessage'
+      responses:
+        '201':
+          description: Message successfully queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /send-media:
+    post:
+      summary: Send Media Message
+      description: Sends an image, document or other media file to a WhatsApp number.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MediaMessage'
+      responses:
+        '201':
+          description: Media message successfully queued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /webhooks:
+    get:
+      summary: Retrieve Webhook Deliveries
+      description: Returns the last webhook events dispatched to your configured URLs (max 1000).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of webhook deliveries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+              example:
+                max: 6
+                itens:
+                  - url: ""
+                    method: POST
+                    status: TRY_AGAIN
+                    type: MESSAGE_NUMBER_NOT_FOUND
+                    category: MESSAGE
+                    token: "7a7dd1b3aaeef3c53612aa5126a433c0"
+                    webhook_id: 99
+                    data:
+                      status: NUMBER_NOT_FOUND
+                      from: "12283010103"
+                      to: "5511999999999"
+                      body: "https://yoursite.com/file.jpg"
+                      type: link
+                      mimetype: image/jpeg
+                      uuid: "db6ac735-8be3-4bc1-ba13-263174b5b9a6"
+                    response:
+                      - data: "2025-08-04T21:14:19.457"
+                        status: -1
+                      - data: "2025-08-04T21:14:30.139"
+                        status: -1
+                    next_try: "2025-08-04T21:34:37.594"
+                    id: 578284
+                    created: "2025-08-04T21:14:19.448"
+                    updated: "2025-08-04T21:17:57.594"
+
+  /messages:
+    get:
+      summary: Retrieve Sent Messages
+      description: Returns the last sent messages with delivery status and metadata (max 1000).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of sent messages
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagesResponse'
+              example:
+                max: 27
+                itens:
+                  - status: DELIVERED
+                    importance: 40
+                    from: "12283010103"
+                    to: "555181721240"
+                    body: "Hello! This is a plain text message."
+                    type: text
+                    mimetype: null
+                    uuid: "82ca3f21-cb7f-4fac-a017-75cb9beecc14"
+                    timestamp: "2025-08-04T21:13:31.000"
+                    sent: "2025-08-04T21:13:35.915"
+                    delivered: "2025-08-04T21:13:36.841"
+                    notified: "2025-08-04T21:13:37.683"
+                    read: null
+                    device_type: android
+                    whatsapp_message_id: "3EB0191CBAFD6A71DD7696"
+                    from_me: true
+                    expire: "2025-08-06T21:13:30.750"
+                    whatsapp_id: 751
+                    id: 417452
+                    created: "2025-08-04T21:13:31.199"
+                    updated: "2025-08-04T21:13:37.683"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    TextMessage:
+      type: object
+      required:
+        - number
+        - body
+      properties:
+        number:
+          type: string
+          example: '5511999999999'
+        body:
+          type: string
+          example: 'Hello! This is a plain text message.'
+
+    MediaMessage:
+      type: object
+      required:
+        - number
+        - body
+        - url_type
+      properties:
+        number:
+          type: string
+          example: '5511999999999'
+        body:
+          type: string
+          example: 'Check out this image!'
+        url_type:
+          type: string
+          example: 'https://yoursite.com/image.jpg'
+
+    MessageResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        importance:
+          type: integer
+        from:
+          type: string
+        to:
+          type: string
+        body:
+          type: string
+        type:
+          type: string
+        caption:
+          type: string
+          nullable: true
+        mimetype:
+          type: string
+        uuid:
+          type: string
+        expire:
+          type: string
+          format: date-time
+        id:
+          type: integer
+        created:
+          type: string
+          format: date-time
+        updated:
+          type: string
+          format: date-time
+
+    WebhookResponse:
+      type: object
+      properties:
+        max:
+          type: integer
+        itens:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+              method:
+                type: string
+              status:
+                type: string
+              type:
+                type: string
+              category:
+                type: string
+              token:
+                type: string
+              webhook_id:
+                type: integer
+              data:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  from:
+                    type: string
+                  to:
+                    type: string
+                  body:
+                    type: string
+                  type:
+                    type: string
+                  mimetype:
+                    type: string
+                  uuid:
+                    type: string
+              response:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    data:
+                      type: string
+                    status:
+                      type: integer
+              next_try:
+                type: string
+              id:
+                type: integer
+              created:
+                type: string
+              updated:
+                type: string
+
+    MessagesResponse:
+      type: object
+      properties:
+        max:
+          type: integer
+        itens:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+              importance:
+                type: integer
+              from:
+                type: string
+              to:
+                type: string
+              body:
+                type: string
+              type:
+                type: string
+              mimetype:
+                type: string
+              uuid:
+                type: string
+              timestamp:
+                type: string
+                format: date-time
+              sent:
+                type: string
+                format: date-time
+                nullable: true
+              delivered:
+                type: string
+                format: date-time
+                nullable: true
+              notified:
+                type: string
+                format: date-time
+                nullable: true
+              read:
+                type: string
+                format: date-time
+                nullable: true
+              device_type:
+                type: string
+              whatsapp_message_id:
+                type: string
+              from_me:
+                type: boolean
+              expire:
+                type: string
+                format: date-time
+              whatsapp_id:
+                type: integer
+              id:
+                type: integer
+              created:
+                type: string
+                format: date-time
+              updated:
+                type: string
+                format: date-time

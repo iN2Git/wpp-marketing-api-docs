@@ -1,0 +1,504 @@
+openapi: 3.0.3
+
+info:
+  title: WPP Marketing Events API
+  version: 1.0.0
+  description: |
+    The WPP Marketing Events API enables businesses to send real-time events from
+    their e-commerce, ERP, or custom systems to automatically trigger WhatsApp
+    interactions with customers.
+
+    ### What you can automate
+
+    - Cart creation and abandoned carts
+    - Order lifecycle (created, paid, shipped, cancelled)
+    - Customer onboarding (new customers)
+    - Payment and shipping notifications
+
+    ### Supported events
+
+    The `event` field must contain one of the following values:
+
+    | Event | When to send it |
+    | --- | --- |
+    | `cart.created` | A customer creates or updates a shopping cart. |
+    | `cart.abandoned` | A cart is considered abandoned and can enter a recovery flow. |
+    | `order.created` | An order is created or is awaiting payment. |
+    | `order.paid` | Payment for an order is confirmed. |
+    | `order.shipped` | An order is shipped and tracking information is available. |
+    | `order.cancelled` | An order is cancelled. |
+    | `customer.created` | A new customer is created in the source system. |
+
+    Any other value is rejected with HTTP `422 Unsupported event`.
+
+    ### How it works
+
+    Each event sent to the API can trigger automated and personalized messages
+    via WhatsApp, allowing you to engage customers at the right moment without
+    manual intervention.
+
+    This helps increase conversion rates, recover abandoned sales, and improve
+    customer retention.
+
+    ### Integration
+
+    The API is designed to be flexible and can be integrated with:
+
+    - E-commerce platforms
+    - ERPs
+    - Custom systems
+    - Middleware or automation tools
+
+    Simply send structured event data and WPP Marketing will handle the automation layer.
+
+    ### Result
+
+    Transform transactional events into automated conversations that drive revenue
+    and scale customer engagement.
+    
+    For more information, visit [https://wppmarketing.com/developers](https://wppmarketing.com/developers)
+
+servers:
+  - url: https://api.wppmarketing.com
+    description: Production
+
+tags:
+  - name: Events
+    description: Send events to trigger WhatsApp automations
+
+paths:
+  /events/:
+    post:
+      tags:
+        - Events
+      summary: Send event
+      description: |
+        Receives events from your system, ERP, or custom store to trigger
+        automations and automated WhatsApp messages.
+
+        Supported values for `event`:
+
+        - `cart.created`
+        - `cart.abandoned`
+        - `order.created`
+        - `order.paid`
+        - `order.shipped`
+        - `order.cancelled`
+        - `customer.created`
+      operationId: sendEvent
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRequest'
+            examples:
+              cartCreated:
+                summary: Cart created
+                description: Event sent when a customer creates a cart.
+                value:
+                  event: cart.created
+                  external_id: CART-1001
+                  customer:
+                    id: "123"
+                    name: "João da Silva"
+                    phone: "5511999999999"
+                    email: "joao@email.com"
+                  order:
+                    id: CART-1001
+                    number: "1001"
+                    total: 149.90
+                    shipping: 0
+                    currency: BRL
+                    payment_method: ""
+                    link_payment: "https://pay.example.com/cart/1001"
+                    link_tracking: ""
+                  created_at: "2026-03-31T14:52:00Z"
+                  metadata:
+                    source: custom_store
+
+              cartAbandoned:
+                summary: Cart abandoned
+                description: Event sent when a cart is not completed.
+                value:
+                  event: cart.abandoned
+                  external_id: CART-1002
+                  customer:
+                    id: "124"
+                    name: "Maria Oliveira"
+                    phone: "5511988887777"
+                    email: "maria@email.com"
+                  order:
+                    id: CART-1002
+                    number: "1002"
+                    total: 259.90
+                    shipping: 19.90
+                    currency: BRL
+                    payment_method: ""
+                    link_payment: "https://pay.example.com/cart/1002"
+                    link_tracking: ""
+                  created_at: "2026-03-31T15:10:00Z"
+                  metadata:
+                    source: custom_store
+
+              orderCreated:
+                summary: Order created
+                description: Event sent when an order is created.
+                value:
+                  event: order.created
+                  external_id: PED-1003
+                  customer:
+                    id: "125"
+                    name: "Carlos Souza"
+                    phone: "5511977776666"
+                    email: "carlos@email.com"
+                  order:
+                    id: PED-1003
+                    number: "1003"
+                    total: 89.90
+                    shipping: 0
+                    currency: BRL
+                    payment_method: pix
+                    link_payment: "https://pay.example.com/order/1003"
+                    link_tracking: ""
+                  created_at: "2026-03-31T15:35:00Z"
+                  metadata:
+                    source: custom_store
+
+              orderPaid:
+                summary: Order paid
+                description: Event sent when an order payment is confirmed.
+                value:
+                  event: order.paid
+                  external_id: PED-1001
+                  customer:
+                    id: "123"
+                    name: "João da Silva"
+                    phone: "5511999999999"
+                    email: "joao@email.com"
+                  order:
+                    id: PED-1001
+                    number: "1001"
+                    total: 149.90
+                    shipping: 0
+                    currency: BRL
+                    payment_method: pix
+                    link_payment: "https://pay.example.com/123"
+                    link_tracking: ""
+                  created_at: "2026-03-31T14:52:00Z"
+                  metadata:
+                    source: custom_store
+
+              orderShipped:
+                summary: Order shipped
+                description: Event sent when an order is shipped.
+                value:
+                  event: order.shipped
+                  external_id: PED-1004
+                  customer:
+                    id: "126"
+                    name: "Fernanda Lima"
+                    phone: "5511966665555"
+                    email: "fernanda@email.com"
+                  order:
+                    id: PED-1004
+                    number: "1004"
+                    total: 199.90
+                    shipping: 24.90
+                    currency: BRL
+                    payment_method: credit_card
+                    link_payment: ""
+                    link_tracking: "https://tracking.example.com/TRK123456BR"
+                  created_at: "2026-03-31T16:05:00Z"
+                  metadata:
+                    source: custom_store
+                    tracking_number: TRK123456BR
+                    shipping_carrier: Correios
+
+              orderCancelled:
+                summary: Order cancelled
+                description: Event sent when an order is cancelled.
+                value:
+                  event: order.cancelled
+                  external_id: PED-1005
+                  customer:
+                    id: "127"
+                    name: "Ana Pereira"
+                    phone: "5511955554444"
+                    email: "ana@email.com"
+                  order:
+                    id: PED-1005
+                    number: "1005"
+                    total: 79.90
+                    shipping: 0
+                    currency: BRL
+                    payment_method: boleto
+                    link_payment: ""
+                    link_tracking: ""
+                  created_at: "2026-03-31T16:20:00Z"
+                  metadata:
+                    source: custom_store
+                    cancel_reason: customer_request
+
+              customerCreated:
+                summary: Customer created
+                description: Event sent when a new customer is created.
+                value:
+                  event: customer.created
+                  external_id: CUS-1001
+                  customer:
+                    id: "128"
+                    name: "Lucas Martins"
+                    phone: "5511944443333"
+                    email: "lucas@email.com"
+                  created_at: "2026-03-31T16:40:00Z"
+                  metadata:
+                    source: custom_store
+
+      responses:
+        '200':
+          description: Event received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSuccessResponse'
+              examples:
+                success:
+                  summary: Success
+                  value:
+                    status: ok
+                    message: Event received successfully
+                    event: order.paid
+                    external_id: PED-1001
+
+        '400':
+          description: Empty body or invalid JSON
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidJson:
+                  summary: Invalid JSON
+                  value:
+                    status: error
+                    message: Invalid JSON
+
+        '401':
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  value:
+                    status: error
+                    message: Invalid token
+
+        '403':
+          description: Company is disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                forbidden:
+                  summary: Company disabled
+                  value:
+                    status: error
+                    message: Company is disabled
+
+        '422':
+          description: Unsupported event or missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unsupportedEvent:
+                  summary: Unsupported event
+                  value:
+                    status: error
+                    message: Unsupported event
+                    event: order.refunded
+
+                missingField:
+                  summary: Missing required field
+                  value:
+                    status: error
+                    message: Field "event" is required
+
+        '503':
+          description: Server temporarily unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serviceUnavailable:
+                  summary: Server busy
+                  value:
+                    status: failed
+                    message: Server is temporarily busy. Please try again later.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+
+  schemas:
+    EventRequest:
+      type: object
+      required:
+        - event
+      anyOf:
+        - required:
+            - external_id
+        - required:
+            - order
+          properties:
+            order:
+              required:
+                - id
+      properties:
+        event:
+          type: string
+          description: Event type sent to the API.
+          enum:
+            - cart.created
+            - cart.abandoned
+            - order.created
+            - order.paid
+            - order.shipped
+            - order.cancelled
+            - customer.created
+          example: order.paid
+
+        external_id:
+          type: string
+          description: Unique external identifier for the event or order. Required when `order.id` is not provided.
+          example: PED-1001
+
+        source:
+          type: string
+          description: Source system identifier. Use lowercase letters, numbers, hyphens or underscores.
+          maxLength: 50
+          example: erp
+
+        origem:
+          type: string
+          description: Alternative field name accepted for `source`.
+          maxLength: 50
+          example: custom_store
+
+        customer:
+          type: object
+          description: Customer data related to the event.
+          properties:
+            id:
+              type: string
+              example: "123"
+            name:
+              type: string
+              example: João da Silva
+            phone:
+              type: string
+              example: "5511999999999"
+            email:
+              type: string
+              format: email
+              example: joao@email.com
+            country:
+              type: string
+              description: Two-letter country code.
+              example: BR
+            state:
+              type: string
+              example: SP
+            city:
+              type: string
+              example: São Paulo
+
+        order:
+          type: object
+          description: Order or cart data when applicable. `order.id` can be used instead of `external_id`.
+          properties:
+            id:
+              type: string
+              example: PED-1001
+            number:
+              type: string
+              example: "1001"
+            total:
+              type: number
+              format: float
+              example: 149.90
+            shipping:
+              type: number
+              format: float
+              example: 0
+            currency:
+              type: string
+              example: BRL
+            payment_method:
+              type: string
+              example: pix
+            link_payment:
+              type: string
+              example: https://pay.example.com/123
+            link_tracking:
+              type: string
+              example: https://tracking.example.com/TRK123456BR
+
+        created_at:
+          type: string
+          format: date-time
+          description: Event date and time in ISO 8601 format.
+          example: "2026-03-31T14:52:00Z"
+
+        metadata:
+          type: object
+          description: Additional free-form metadata sent by the integrator.
+          additionalProperties: true
+          example:
+            source: custom_store
+
+    EventSuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        message:
+          type: string
+          example: Event received successfully
+        event:
+          type: string
+          example: order.paid
+        external_id:
+          type: string
+          example: PED-1001
+        origem:
+          type: string
+          description: Normalized source associated with the received event.
+          example: erp
+
+    ErrorResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: error
+        message:
+          type: string
+          example: Invalid token
+        event:
+          type: string
+          nullable: true
+          example: order.refunded

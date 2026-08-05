@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>WPP Marketing API Documentation | Messaging and Commerce Events</title>
+  <meta name="description" content="Official WPP Marketing API documentation for WhatsApp Business messaging, media, delivery logs, webhooks and commerce events from e-commerce and ERP systems." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#111827" />
+  <link rel="canonical" href="https://api.wppmarketing.com/docs/" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1120'/%3E%3Ccircle cx='32' cy='32' r='14' fill='%2322c55e'/%3E%3C/svg%3E" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="WPP Marketing" />
+  <meta property="og:title" content="WPP Marketing API Documentation" />
+  <meta property="og:description" content="Integrate WhatsApp Business messaging, delivery logs, webhooks and commerce events with the WPP Marketing API." />
+  <meta property="og:url" content="https://api.wppmarketing.com/docs/" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="WPP Marketing API Documentation" />
+  <meta name="twitter:description" content="Official interactive documentation for WPP Marketing messaging, webhooks and commerce events APIs." />
+
+  <script>
+    (function () {
+      var savedTheme = "";
+      try { savedTheme = localStorage.getItem("wpp-marketing-docs-theme") || ""; } catch (error) {}
+      document.documentElement.dataset.theme = savedTheme === "dark" ? "dark" : "light";
+    })();
+  </script>
+
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui.css" />
+  <style>
+    :root {
+      color-scheme: light;
+      --page-bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --line: #e2e8f0;
+      --brand: #16a34a;
+      --brand-dark: #15803d;
+      --header: #0b1120;
+    }
+
+    html[data-theme="dark"] {
+      color-scheme: dark;
+      --page-bg: #101516;
+      --surface: #171d1f;
+      --text: #f1f5f9;
+      --muted: #b7c0ca;
+      --line: #344047;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--page-bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    .site-header {
+      color: #fff;
+      background: radial-gradient(circle at 90% 20%, rgba(34, 197, 94, .2), transparent 32%), var(--header);
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+    }
+
+    .site-header__inner, .documentation, .site-footer__inner {
+      width: min(1180px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .site-header__inner { padding: 54px 0 48px; }
+    .header-topbar, .site-footer__inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .header-topbar { margin-bottom: 30px; }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 750;
+      letter-spacing: -.02em;
+      text-decoration: none;
+    }
+    .brand__mark {
+      width: 12px;
+      height: 12px;
+      background: var(--brand);
+      border-radius: 50%;
+      box-shadow: 0 0 0 5px rgba(34, 197, 94, .16);
+    }
+
+    .theme-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 40px;
+      padding: 0 13px;
+      color: #e2e8f0;
+      background: rgba(255, 255, 255, .06);
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 9px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .theme-toggle:hover { background: rgba(255, 255, 255, .11); }
+    .theme-toggle:focus-visible { outline: 3px solid rgba(134, 239, 172, .8); outline-offset: 3px; }
+    .theme-toggle svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+    .theme-toggle__sun, html[data-theme="dark"] .theme-toggle__moon { display: none; }
+    html[data-theme="dark"] .theme-toggle__sun { display: block; }
+
+    .eyebrow { margin: 0 0 12px; color: #86efac; font-size: 13px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { max-width: 900px; margin: 0; font-size: clamp(36px, 6vw, 64px); line-height: 1.04; letter-spacing: -.045em; }
+    .introduction { max-width: 790px; margin: 22px 0 0; color: #cbd5e1; font-size: clamp(17px, 2vw, 20px); line-height: 1.65; }
+    .header-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 9px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+    .button:hover { background: rgba(255, 255, 255, .08); border-color: rgba(255, 255, 255, .36); transform: translateY(-1px); }
+    .button--primary { background: var(--brand); border-color: var(--brand); }
+    .button--primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+
+    .feature-list { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; margin: 0; padding: 0; background: rgba(255, 255, 255, .1); list-style: none; }
+    .feature-list li { padding: 18px 20px; background: rgba(11, 17, 32, .94); color: #e2e8f0; font-size: 14px; font-weight: 650; text-align: center; }
+
+    .documentation { padding: 42px 0 56px; }
+    .documentation__heading { margin: 0 0 8px; font-size: 28px; letter-spacing: -.03em; }
+    .documentation__description { margin: 0 0 28px; color: var(--muted); line-height: 1.6; }
+    .specification-picker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin: 0 0 20px;
+      padding: 16px 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .specification-picker label { color: var(--text); font-size: 14px; font-weight: 700; }
+    .specification-picker select {
+      width: min(100%, 430px);
+      min-height: 42px;
+      padding: 0 38px 0 13px;
+      color: var(--text);
+      background: var(--input-bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 650;
+    }
+    .specification-picker select:focus-visible { outline: 3px solid rgba(34, 197, 94, .25); border-color: var(--brand); }
+    #swagger-ui { overflow: hidden; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 16px 50px rgba(15, 23, 42, .07); }
+    .swagger-ui .wrapper { max-width: none; padding: 0 22px; }
+    .swagger-ui .info { margin: 34px 0; }
+    .swagger-ui .scheme-container { margin: 0 0 28px; padding: 22px; background: var(--page-bg); box-shadow: none; border: 1px solid var(--line); border-radius: 10px; }
+    .swagger-ui .btn.authorize { color: var(--brand-dark); border-color: var(--brand); }
+    .swagger-ui .btn.authorize svg { fill: var(--brand-dark); }
+
+    html[data-theme="dark"] .swagger-ui, html[data-theme="dark"] .swagger-ui .info .title,
+    html[data-theme="dark"] .swagger-ui .info li, html[data-theme="dark"] .swagger-ui .info p,
+    html[data-theme="dark"] .swagger-ui .info table, html[data-theme="dark"] .swagger-ui .opblock-tag,
+    html[data-theme="dark"] .swagger-ui .opblock-description-wrapper p,
+    html[data-theme="dark"] .swagger-ui .parameter__name, html[data-theme="dark"] .swagger-ui .parameter__type,
+    html[data-theme="dark"] .swagger-ui .response-col_status, html[data-theme="dark"] .swagger-ui .response-col_description,
+    html[data-theme="dark"] .swagger-ui .model-title, html[data-theme="dark"] .swagger-ui .model { color: var(--text); }
+    html[data-theme="dark"] .swagger-ui .opblock-tag { border-bottom-color: var(--line); }
+    html[data-theme="dark"] .swagger-ui section.models { border-color: var(--line); }
+    html[data-theme="dark"] .swagger-ui section.models h4 { color: var(--text); }
+
+    .site-footer { padding: 28px 0; color: #cbd5e1; background: var(--header); font-size: 14px; }
+    .site-footer a { color: #86efac; }
+
+    @media (max-width: 760px) {
+      .site-header__inner { padding: 32px 0 36px; }
+      .header-topbar { align-items: flex-start; }
+      .feature-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .documentation { padding: 30px 0 40px; }
+      .specification-picker { align-items: flex-start; flex-direction: column; gap: 10px; }
+      .specification-picker select { width: 100%; }
+      .swagger-ui .wrapper { padding: 0 12px; }
+      .site-footer__inner { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <div class="header-topbar">
+        <a class="brand" href="https://wppmarketing.com/" aria-label="WPP Marketing website">
+          <span class="brand__mark" aria-hidden="true"></span>
+          WPP Marketing
+        </a>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false">
+          <svg class="theme-toggle__moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.4 15.2A8.5 8.5 0 0 1 8.8 3.6 8.5 8.5 0 1 0 20.4 15.2Z"></path></svg>
+          <svg class="theme-toggle__sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"></path></svg>
+          <span class="theme-toggle__label">Dark mode</span>
+        </button>
+      </div>
+
+      <p class="eyebrow">Official developer documentation</p>
+      <h1>WPP Marketing API</h1>
+      <p class="introduction">Build integrations to send WhatsApp Business messages, monitor delivery and submit commerce events from e-commerce, ERP and custom systems through the WPP Marketing REST APIs.</p>
+
+      <div class="header-actions">
+        <a class="button button--primary" href="#api-reference">Explore the API</a>
+        <a class="button" href="?spec=events#api-reference">Events API</a>
+        <a class="button" href="https://wppmarketing.com/integrations/api-developer/">Developer integration</a>
+        <a class="button" href="wpp_marketing.yaml">OpenAPI specification</a>
+      </div>
+    </div>
+
+    <ul class="feature-list" aria-label="API capabilities">
+      <li>Text Messages</li>
+      <li>Media Messages</li>
+      <li>Message Status</li>
+      <li>Webhook Deliveries</li>
+      <li>Commerce Events</li>
+    </ul>
+  </header>
+
+  <main id="api-reference" class="documentation">
+    <h2 class="documentation__heading">API reference</h2>
+    <p class="documentation__description">Choose a specification, authenticate with a Bearer token, inspect request and response schemas, and test the messaging or commerce events endpoints below.</p>
+    <div class="specification-picker">
+      <label for="specification-select">API specification</label>
+      <select id="specification-select">
+        <option value="wpp_marketing.yaml?v=20260805-1" data-spec="messaging">Messaging API</option>
+        <option value="wpp_marketing_events.yaml?v=20260805-1" data-spec="events">Events API</option>
+      </select>
+    </div>
+    <div id="swagger-ui"></div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="site-footer__inner">
+      <span>Official WPP Marketing API documentation.</span>
+      <a href="https://wppmarketing.com/">wppmarketing.com</a>
+    </div>
+  </footer>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.addEventListener("load", function () {
+      var themeToggle = document.getElementById("theme-toggle");
+      var themeLabel = themeToggle.querySelector(".theme-toggle__label");
+      var themeColor = document.querySelector('meta[name="theme-color"]');
+
+      function updateThemeControl() {
+        var isDark = document.documentElement.dataset.theme === "dark";
+        themeToggle.setAttribute("aria-pressed", String(isDark));
+        themeToggle.setAttribute("aria-label", isDark ? "Use light mode" : "Use dark mode");
+        themeLabel.textContent = isDark ? "Light mode" : "Dark mode";
+        themeColor.setAttribute("content", isDark ? "#101516" : "#111827");
+      }
+
+      themeToggle.addEventListener("click", function () {
+        var nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+        document.documentElement.dataset.theme = nextTheme;
+        try { localStorage.setItem("wpp-marketing-docs-theme", nextTheme); } catch (error) {}
+        updateThemeControl();
+      });
+
+      updateThemeControl();
+
+      var specificationSelect = document.getElementById("specification-select");
+      var requestedSpec = new URLSearchParams(window.location.search).get("spec");
+      var requestedOption = specificationSelect.querySelector('[data-spec="' + requestedSpec + '"]');
+      if (requestedOption) { requestedOption.selected = true; }
+
+      function loadSpecification(url) {
+        SwaggerUIBundle({
+          url: url,
+          dom_id: "#swagger-ui",
+          deepLinking: true,
+          displayRequestDuration: true,
+          filter: true,
+          persistAuthorization: false,
+          presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+          layout: "BaseLayout",
+          validatorUrl: null
+        });
+      }
+
+      specificationSelect.addEventListener("change", function () {
+        var selectedOption = specificationSelect.options[specificationSelect.selectedIndex];
+        var selectedSpec = selectedOption.dataset.spec;
+        var nextUrl = new URL(window.location.href);
+        if (selectedSpec === "messaging") { nextUrl.searchParams.delete("spec"); }
+        else { nextUrl.searchParams.set("spec", selectedSpec); }
+        window.history.replaceState({}, "", nextUrl.pathname + nextUrl.search + nextUrl.hash);
+        loadSpecification(specificationSelect.value);
+      });
+
+      loadSpecification(specificationSelect.value);
+    });
+  </script>
+</body>
+</html>
