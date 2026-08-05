@@ -179,16 +179,133 @@
     .swagger-ui .btn.authorize { color: var(--brand-dark); border-color: var(--brand); }
     .swagger-ui .btn.authorize svg { fill: var(--brand-dark); }
 
-    html[data-theme="dark"] .swagger-ui, html[data-theme="dark"] .swagger-ui .info .title,
-    html[data-theme="dark"] .swagger-ui .info li, html[data-theme="dark"] .swagger-ui .info p,
-    html[data-theme="dark"] .swagger-ui .info table, html[data-theme="dark"] .swagger-ui .opblock-tag,
-    html[data-theme="dark"] .swagger-ui .opblock-description-wrapper p,
-    html[data-theme="dark"] .swagger-ui .parameter__name, html[data-theme="dark"] .swagger-ui .parameter__type,
-    html[data-theme="dark"] .swagger-ui .response-col_status, html[data-theme="dark"] .swagger-ui .response-col_description,
-    html[data-theme="dark"] .swagger-ui .model-title, html[data-theme="dark"] .swagger-ui .model { color: var(--text); }
+    html[data-theme="dark"] .swagger-ui,
+    html[data-theme="dark"] .swagger-ui .info .title,
+    html[data-theme="dark"] .swagger-ui .info li,
+    html[data-theme="dark"] .swagger-ui .info p,
+    html[data-theme="dark"] .swagger-ui .info table,
+    html[data-theme="dark"] .swagger-ui .opblock-tag,
+    html[data-theme="dark"] .swagger-ui .opblock .opblock-summary-path,
+    html[data-theme="dark"] .swagger-ui .opblock .opblock-summary-path__deprecated,
+    html[data-theme="dark"] .swagger-ui .opblock .opblock-summary-description,
+    html[data-theme="dark"] .swagger-ui .opblock-description-wrapper,
+    html[data-theme="dark"] .swagger-ui .opblock-external-docs-wrapper,
+    html[data-theme="dark"] .swagger-ui .opblock-title_normal,
+    html[data-theme="dark"] .swagger-ui .parameter__name,
+    html[data-theme="dark"] .swagger-ui .parameter__type,
+    html[data-theme="dark"] .swagger-ui .response-col_status,
+    html[data-theme="dark"] .swagger-ui .response-col_links,
+    html[data-theme="dark"] .swagger-ui .responses-inner h4,
+    html[data-theme="dark"] .swagger-ui .responses-inner h5,
+    html[data-theme="dark"] .swagger-ui .tab li,
+    html[data-theme="dark"] .swagger-ui label,
+    html[data-theme="dark"] .swagger-ui table thead tr td,
+    html[data-theme="dark"] .swagger-ui table thead tr th,
+    html[data-theme="dark"] .swagger-ui .model-title,
+    html[data-theme="dark"] .swagger-ui .model,
+    html[data-theme="dark"] .swagger-ui section.models h4,
+    html[data-theme="dark"] .swagger-ui .prop-type,
+    html[data-theme="dark"] .swagger-ui .prop-format {
+      color: var(--text);
+    }
+
+    html[data-theme="dark"] .swagger-ui .opblock .opblock-summary-path,
+    html[data-theme="dark"] .swagger-ui .opblock .opblock-summary-description { opacity: 1; }
+
+    html[data-theme="dark"] .swagger-ui .opblock .opblock-summary-description,
+    html[data-theme="dark"] .swagger-ui .parameter__type,
+    html[data-theme="dark"] .swagger-ui .parameter__in,
+    html[data-theme="dark"] .swagger-ui .response-col_links,
+    html[data-theme="dark"] .swagger-ui .model-hint { color: var(--muted); }
+
+    html[data-theme="dark"] .swagger-ui .info a { color: #4ade80; }
+
+    html[data-theme="dark"] .swagger-ui .opblock-tag,
+    html[data-theme="dark"] .swagger-ui section.models,
+    html[data-theme="dark"] .swagger-ui section.models .model-container,
+    html[data-theme="dark"] .swagger-ui .model-box {
+      background: var(--surface);
+      border-color: var(--line);
+    }
+
     html[data-theme="dark"] .swagger-ui .opblock-tag { border-bottom-color: var(--line); }
-    html[data-theme="dark"] .swagger-ui section.models { border-color: var(--line); }
-    html[data-theme="dark"] .swagger-ui section.models h4 { color: var(--text); }
+
+    html[data-theme="dark"] .swagger-ui .opblock .opblock-section-header,
+    html[data-theme="dark"] .swagger-ui .responses-wrapper,
+    html[data-theme="dark"] .swagger-ui .request-body,
+    html[data-theme="dark"] .swagger-ui .parameters-container {
+      color: var(--text);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    html[data-theme="dark"] .swagger-ui .opblock .opblock-section-header {
+      background: rgba(255, 255, 255, .035);
+      border-color: var(--line);
+    }
+
+    html[data-theme="dark"] .swagger-ui section.models .model-container:hover { background: #14241d; }
+
+    html[data-theme="dark"] .swagger-ui input[type="email"],
+    html[data-theme="dark"] .swagger-ui input[type="file"],
+    html[data-theme="dark"] .swagger-ui input[type="password"],
+    html[data-theme="dark"] .swagger-ui input[type="search"],
+    html[data-theme="dark"] .swagger-ui input[type="text"],
+    html[data-theme="dark"] .swagger-ui select,
+    html[data-theme="dark"] .swagger-ui textarea {
+      color: var(--text);
+      background: var(--input-bg);
+      border-color: #3a4a63;
+    }
+
+    html[data-theme="dark"] .swagger-ui .highlight-code,
+    html[data-theme="dark"] .swagger-ui .microlight,
+    html[data-theme="dark"] .swagger-ui pre,
+    html[data-theme="dark"] .swagger-ui code { background: var(--code-bg) !important; }
+
+    html[data-theme="dark"] .swagger-ui .dialog-ux .modal-ux,
+    html[data-theme="dark"] .swagger-ui .dialog-ux .modal-ux-header,
+    html[data-theme="dark"] .swagger-ui .dialog-ux .modal-ux-content {
+      color: var(--text);
+      background: var(--surface);
+      border-color: var(--line);
+    }
+
+    html[data-theme="dark"] .swagger-ui .opblock-control-arrow svg,
+    html[data-theme="dark"] .swagger-ui .expand-operation svg,
+    html[data-theme="dark"] .swagger-ui .authorization__btn svg,
+    html[data-theme="dark"] .swagger-ui .models-control svg,
+    html[data-theme="dark"] .swagger-ui .model-toggle::after {
+      filter: brightness(0) invert(1);
+      opacity: .82;
+    }
+
+    html[data-theme="dark"] .swagger-ui .copy-to-clipboard { background: #25313a; }
+
+    html[data-theme="dark"] .swagger-ui .btn,
+    html[data-theme="dark"] .swagger-ui .btn.cancel,
+    html[data-theme="dark"] .swagger-ui .btn.execute { color: var(--text); }
+
+    html[data-theme="dark"] .swagger-ui .btn.authorize {
+      color: #55d6a5;
+      border-color: #55d6a5;
+    }
+
+    html[data-theme="dark"] .swagger-ui .btn.authorize svg {
+      fill: #55d6a5;
+      filter: none;
+    }
+
+    html[data-theme="dark"] .swagger-ui input::placeholder,
+    html[data-theme="dark"] .swagger-ui textarea::placeholder {
+      color: #94a3b8;
+      opacity: 1;
+    }
+
+    html[data-theme="dark"] .swagger-ui select option {
+      color: var(--text);
+      background: var(--input-bg);
+    }
 
     .site-footer { padding: 28px 0; color: #cbd5e1; background: var(--header); font-size: 14px; }
     .site-footer a { color: #86efac; }
