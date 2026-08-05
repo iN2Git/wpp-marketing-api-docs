@@ -33,6 +33,4 @@ https://wppmarketing.com/
 
 ## Support
 
-For integration support, contact the WPP Marketing team:
-
-support@wppmarketing.com
+For integration support, contact the WPP Marketing team.
