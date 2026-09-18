@@ -8,14 +8,14 @@
   <meta name="description" content="Official WPP Marketing API documentation for WhatsApp Business messaging, media, delivery logs, webhooks and commerce events from e-commerce and ERP systems." />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="theme-color" content="#111827" />
-  <link rel="canonical" href="https://in2git.github.io/wpp-marketing-api-docs/" />
+  <link rel="canonical" href="https://api.wppmarketing.com/docs/" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230b1120'/%3E%3Ccircle cx='32' cy='32' r='14' fill='%2322c55e'/%3E%3C/svg%3E" />
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="WPP Marketing" />
   <meta property="og:title" content="WPP Marketing API Documentation" />
   <meta property="og:description" content="Integrate WhatsApp Business messaging, delivery logs, webhooks and commerce events with the WPP Marketing API." />
-  <meta property="og:url" content="https://in2git.github.io/wpp-marketing-api-docs/" />
+  <meta property="og:url" content="https://api.wppmarketing.com/docs/" />
 
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="WPP Marketing API Documentation" />
@@ -50,6 +50,8 @@
       --text: #f1f5f9;
       --muted: #b7c0ca;
       --line: #344047;
+      --input-bg: #172126;
+      --code-bg: #11191d;
     }
 
     * { box-sizing: border-box; }
@@ -209,6 +211,43 @@
       color: var(--text);
     }
 
+    /* Swagger assigns foreground colors to descendants rather than inheriting
+       the wrapper color. Override those explicit light-theme colors as well. */
+    html[data-theme="dark"] .swagger-ui .opblock-description-wrapper p,
+    html[data-theme="dark"] .swagger-ui .opblock-description-wrapper li,
+    html[data-theme="dark"] .swagger-ui .opblock-external-docs-wrapper p,
+    html[data-theme="dark"] .swagger-ui .opblock-title_normal p,
+    html[data-theme="dark"] .swagger-ui .opblock .opblock-section-header h4,
+    html[data-theme="dark"] .swagger-ui .markdown,
+    html[data-theme="dark"] .swagger-ui .markdown p,
+    html[data-theme="dark"] .swagger-ui .markdown li,
+    html[data-theme="dark"] .swagger-ui .renderedMarkdown,
+    html[data-theme="dark"] .swagger-ui .renderedMarkdown p,
+    html[data-theme="dark"] .swagger-ui .renderedMarkdown li,
+    html[data-theme="dark"] .swagger-ui .renderedMarkdown h1,
+    html[data-theme="dark"] .swagger-ui .renderedMarkdown h2,
+    html[data-theme="dark"] .swagger-ui .renderedMarkdown h3,
+    html[data-theme="dark"] .swagger-ui .response-col_description,
+    html[data-theme="dark"] .swagger-ui .response-col_description p,
+    html[data-theme="dark"] .swagger-ui .model-box .property,
+    html[data-theme="dark"] .swagger-ui .dialog-ux .modal-ux h3,
+    html[data-theme="dark"] .swagger-ui .dialog-ux .modal-ux h4,
+    html[data-theme="dark"] .swagger-ui .dialog-ux .modal-ux p {
+      color: var(--text);
+    }
+
+    html[data-theme="dark"] .swagger-ui a { color: #86efac; }
+    html[data-theme="dark"] .swagger-ui .parameter__name.required::after,
+    html[data-theme="dark"] .swagger-ui .parameter__name.required span,
+    html[data-theme="dark"] .swagger-ui .opblock-section-header label span {
+      color: #fda4af;
+    }
+    html[data-theme="dark"] .swagger-ui input::placeholder,
+    html[data-theme="dark"] .swagger-ui textarea::placeholder {
+      color: var(--muted);
+      opacity: 1;
+    }
+
     html[data-theme="dark"] .swagger-ui .opblock .opblock-summary-path,
     html[data-theme="dark"] .swagger-ui .opblock .opblock-summary-description { opacity: 1; }
 
@@ -364,8 +403,8 @@
     <div class="specification-picker">
       <label for="specification-select">API specification</label>
       <select id="specification-select">
-        <option value="wpp_marketing.yaml?v=20260805-1" data-spec="messaging">Messaging API</option>
-        <option value="wpp_marketing_events.yaml?v=20260805-1" data-spec="events">Events API</option>
+        <option value="wpp_marketing.yaml?v=20260918-1" data-spec="messaging">Messaging API</option>
+        <option value="wpp_marketing_events.yaml?v=20260918-1" data-spec="events">Events API</option>
       </select>
     </div>
     <div id="swagger-ui"></div>
