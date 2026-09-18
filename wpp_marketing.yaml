@@ -10,6 +10,46 @@ info:
     - Retrieve sent message logs.
     - Retrieve webhook delivery logs.
 
+    ### Authentication and scopes
+    Create an integration credential in API Developer > API Credentials and send
+    `Authorization: Bearer TOKEN`. Never use a WhatsApp provider token here.
+    Sending requires `messages:write`, message history requires `messages:read`,
+    and webhook history requires `webhooks:read`. Commerce events require `events:write`
+    and are documented in the separate Events API specification available on this page.
+
+    ### Sending and delivery
+    Sending uses the same configured connection and rules as the WPP Marketing panel.
+    HTTP 200 does not guarantee delivery: inspect message history and status webhooks.
+    Official text and image messages use the account's configured templates.
+    Official audio, video and documents require a customer-service window opened by
+    a message from the recipient within the preceding 24 hours. Provider restrictions
+    still apply, even when a format passes this API's URL validation.
+    There is no separate audio endpoint; use POST /send-media with media_type audio.
+    POST / is a legacy alias accepting text or media; new integrations should use
+    /send-text or /send-media.
+
+    ### Outbound webhooks
+    Register your public HTTPS endpoint and enable events in the WPP Marketing panel.
+    This API does not provide webhook registration endpoints. Incoming provider logs
+    are not GET /webhooks: that endpoint lists normalized outbound delivery records.
+    Only enabled events are stored and sent. The JSON contains id, event, timestamp
+    and message, using the WebhookEvent schema below; provider origin is not included.
+    Events are MESSAGE_CREATED, MESSAGE_DELIVERED, MESSAGE_READ and MESSAGE_ERROR.
+    Headers are Content-Type application/json, User-Agent WPPMarketing-Webhooks/1.0,
+    Webhook-Id (same as JSON id), and Webhook-Attempt (starting at 1).
+    No HMAC signature is currently sent. Respond with HTTP 2xx within 15 seconds;
+    redirects are not followed. Deduplicate using id and tolerate out-of-order events.
+    Connection failures, timeouts, HTTP 408, 425, 429 and 5xx are retried, up to seven
+    total attempts, with delays of 1 minute, 5 minutes, 15 minutes, 1 hour, 6 hours
+    and 24 hours. Retry-After is honored up to 24 hours. Other 4xx responses are final.
+    Completed delivered/failed records are retained for 30 days.
+
+    ### Rate limits
+    Default limits per 60-second window are 60 sends, 120 message-history requests,
+    120 webhook-history requests and 300 commerce events. Server configuration may
+    override these values. Inspect RateLimit-Limit, RateLimit-Remaining and
+    RateLimit-Reset; HTTP 429 also includes Retry-After in seconds.
+
     For more information, visit [https://wppmarketing.com/developers](https://wppmarketing.com/developers)
   version: 1.0.0
 
@@ -17,15 +57,13 @@ info:
 servers:
   - url: https://api.wppmarketing.com
     description: Production
-  - description: SwaggerHub API Auto Mocking
-    url: https://virtserver.swaggerhub.com/wppmarketing/WPP/1.0.0
 
 paths:
   /send-text:
     post:
       operationId: sendTextMessage
       summary: Send Text Message
-      description: Sends a plain text message to a WhatsApp number.
+      description: Sends text using the account's configured connection and, for official connections, its configured text template. Requires messages:write. HTTP 200 is not a delivery confirmation.
       security:
         - bearerAuth: []
       parameters:
@@ -67,6 +105,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Media fields are not allowed here or media_type was provided without a URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '429':
           $ref: '#/components/responses/RateLimitExceeded'
         '502':
@@ -91,6 +135,8 @@ paths:
         The media URL must use HTTPS, resolve only to public addresses and end with a supported extension.
         Official connections use the configured image template for images. Audio, video and document
         are sent as Cloud API session messages and therefore require an open customer-service window.
+        Requires messages:write. URLs are passed to the configured provider, not uploaded by this API.
+        Accepted URL extensions do not override the provider's codec, MIME, size or format restrictions.
       security:
         - bearerAuth: []
       parameters:
@@ -102,19 +148,36 @@ paths:
             schema:
               $ref: '#/components/schemas/MediaMessage'
             examples:
+              imageWithCaption:
+                summary: Send an image
+                description: The body field is an optional caption and may be omitted.
+                value:
+                  number: '5511999999999'
+                  body: 'Your order is ready.'
+                  url_type: 'https://cdn.example.com/images/order-ready.jpg'
+                  media_type: image
+              document:
+                summary: Send a PDF document
+                description: The body field is an optional caption and may be omitted.
+                value:
+                  number: '5511999999999'
+                  body: 'Your invoice.'
+                  url_type: 'https://cdn.example.com/documents/invoice.pdf'
+                  media_type: document
+              video:
+                summary: Send a video
+                description: The body field is an optional caption and may be omitted.
+                value:
+                  number: '5511999999999'
+                  body: 'Product demonstration.'
+                  url_type: 'https://cdn.example.com/video/demo.mp4'
+                  media_type: video
               audio:
                 summary: Send an audio file
                 value:
                   number: '5511999999999'
                   url_type: 'https://cdn.example.com/audio/customer-update.mp3'
                   media_type: audio
-              imageWithCaption:
-                summary: Send an image with a caption
-                value:
-                  number: '5511999999999'
-                  body: 'Your order is ready.'
-                  url_type: 'https://cdn.example.com/images/order-ready.jpg'
-                  media_type: image
       responses:
         '200':
           description: Media message accepted by the configured WhatsApp connection
@@ -170,7 +233,8 @@ paths:
   /messages:
     get:
       summary: Retrieve Sent Messages
-      description: Returns sent messages with delivery status and metadata using offset pagination.
+      operationId: listMessages
+      description: Returns the authenticated account's local WPP Marketing message records, newest first, using offset pagination. Requires messages:read. Status and type are platform values, including automation labels; they are not restricted to the sending endpoint's media categories. Destination numbers may retain a leading plus sign. An empty history returns itens [] and max 0.
       security:
         - bearerAuth: []
       parameters:
@@ -243,6 +307,7 @@ paths:
         Returns the authenticated account's webhook delivery history using offset pagination.
         Events use the same public contract regardless of which WhatsApp connection originated them.
         Provider details are never returned.
+        Requires webhooks:read. Records are newest first. An empty history returns itens [] and max 0.
       security:
         - bearerAuth: []
       parameters:
@@ -372,7 +437,7 @@ components:
       name: Idempotency-Key
       in: header
       required: false
-      description: Unique key for safely retrying the same request for 48 hours. Reusing it with a different body returns HTTP 409.
+      description: Optional key scoped to the account and endpoint for retrying the same request for 48 hours. Replays return the cached successful response. Reusing it with different normalized request data returns HTTP 409. Without this header, repeated requests may send multiple messages. Provider failures are not cached; delivery webhooks can report asynchronous failure after HTTP 200.
       schema:
         type: string
         maxLength: 128
@@ -410,6 +475,7 @@ components:
       properties:
         number:
           type: string
+          description: Destination with country code. Non-digit characters are removed before sending.
           example: '5511999999999'
         body:
           type: string
@@ -426,7 +492,7 @@ components:
           example: '5511999999999'
         body:
           type: string
-          description: Optional caption. Some media types, such as audio, may be sent without a caption.
+          description: Optional caption, supplied in the body field (not a caption request field). May be omitted for any media category. Official audio messages do not include a caption.
           example: 'Check out this image!'
         url_type:
           type: string
@@ -452,37 +518,56 @@ components:
 
     MessageResponse:
       type: object
+      required: [status, to, body, type, media_url, caption]
+      description: Platform response, not a raw provider response. Record fields are present when a matching local record is available. Delivery is asynchronous; HTTP 200 alone does not mean delivered.
       properties:
         status:
           type: string
-        importance:
-          type: integer
-        from:
-          type: string
+          example: Sucesso
         to:
           type: string
         body:
           type: string
         type:
           type: string
+          enum: [text, image, audio, video, document]
+        media_url:
+          type: string
+          nullable: true
+        delivery_status:
+          type: string
+          example: SENT
+        message_id:
+          type: string
+          nullable: true
+        official_api:
+          type: boolean
         caption:
           type: string
           nullable: true
-        mimetype:
-          type: string
-        uuid:
-          type: string
-        expire:
-          type: string
-          format: date-time
         id:
           type: integer
         created:
           type: string
           format: date-time
+          nullable: true
         updated:
           type: string
           format: date-time
+          nullable: true
+      example:
+        id: 1001
+        status: Sucesso
+        delivery_status: SENT
+        to: '5511999999999'
+        body: 'Your order is ready.'
+        type: image
+        media_url: 'https://cdn.example.com/images/order-ready.jpg'
+        caption: 'Your order is ready.'
+        message_id: wamid.EXAMPLE
+        official_api: true
+        created: '2026-09-18T14:00:00Z'
+        updated: null
 
     MessagesResponse:
       type: object
@@ -529,9 +614,11 @@ components:
               created:
                 type: string
                 format: date-time
+                nullable: true
               updated:
                 type: string
                 format: date-time
+                nullable: true
         pagination:
           $ref: '#/components/schemas/Pagination'
 
@@ -551,6 +638,31 @@ components:
             $ref: '#/components/schemas/WebhookDelivery'
         pagination:
           $ref: '#/components/schemas/Pagination'
+
+    WebhookEvent:
+      type: object
+      required: [id, event, timestamp, message]
+      properties:
+        id:
+          type: string
+          description: Stable event identifier; also sent in Webhook-Id. Use for deduplication.
+        event:
+          type: string
+          enum: [MESSAGE_CREATED, MESSAGE_DELIVERED, MESSAGE_READ, MESSAGE_ERROR]
+        timestamp:
+          type: string
+          format: date-time
+        message:
+          $ref: '#/components/schemas/WebhookMessage'
+      example:
+        id: evt_0123456789abcdef0123456789abcdef
+        event: MESSAGE_ERROR
+        timestamp: '2026-09-18T14:00:00Z'
+        message:
+          id: wamid.EXAMPLE
+          status: error
+          phone: '5511999999999'
+          error: 'Message could not be delivered.'
 
     WebhookDelivery:
       type: object
