@@ -284,7 +284,8 @@ paths:
                   summary: Invalid JSON
                   value:
                     status: error
-                    message: Invalid JSON
+                    code: invalid_json
+                    message: Request body must contain valid JSON
 
         '401':
           description: Missing or invalid token
@@ -297,7 +298,8 @@ paths:
                   summary: Unauthorized
                   value:
                     status: error
-                    message: Invalid token
+                    code: invalid_token
+                    message: Invalid, expired or revoked token
 
         '403':
           description: Company is disabled
@@ -310,7 +312,8 @@ paths:
                   summary: Company disabled
                   value:
                     status: error
-                    message: Company is disabled
+                    code: account_disabled
+                    message: Account disabled
 
         '422':
           description: Unsupported event or missing required fields
@@ -323,17 +326,48 @@ paths:
                   summary: Unsupported event
                   value:
                     status: error
+                    code: unsupported_event
                     message: Unsupported event
-                    event: order.refunded
+                    details:
+                      event: order.refunded
 
                 missingField:
                   summary: Missing required field
                   value:
                     status: error
+                    code: event_required
                     message: Field "event" is required
 
+        '429':
+          description: Request limit exceeded. Retry after the number of seconds indicated by Retry-After.
+          headers:
+            Retry-After:
+              description: Seconds until the current rate-limit window resets.
+              schema:
+                type: integer
+            RateLimit-Limit:
+              description: Maximum requests allowed in the current window.
+              schema:
+                type: integer
+            RateLimit-Remaining:
+              description: Requests remaining in the current window.
+              schema:
+                type: integer
+            RateLimit-Reset:
+              description: Seconds until the current window resets.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                code: rate_limit_exceeded
+                message: Rate limit exceeded
+
         '503':
-          description: Server temporarily unavailable
+          description: Server temporarily unavailable or event lock could not be acquired
           content:
             application/json:
               schema:
@@ -342,8 +376,15 @@ paths:
                 serviceUnavailable:
                   summary: Server busy
                   value:
-                    status: failed
+                    status: error
+                    code: server_busy
                     message: Server is temporarily busy. Please try again later.
+                eventLocked:
+                  summary: Matching event is still being processed
+                  value:
+                    status: error
+                    code: event_lock_unavailable
+                    message: Event is already being processed. Please retry shortly
 
 components:
   securitySchemes:
@@ -351,6 +392,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: Token
+      description: Use a scoped integration credential with events:write.
 
   schemas:
     EventRequest:
@@ -491,14 +533,23 @@ components:
 
     ErrorResponse:
       type: object
+      required:
+        - status
+        - code
+        - message
       properties:
         status:
           type: string
-          example: error
+          enum: [error]
+        code:
+          type: string
+          description: Stable machine-readable error code.
+          example: invalid_token
         message:
           type: string
-          example: Invalid token
-        event:
-          type: string
-          nullable: true
-          example: order.refunded
+          description: Human-readable error description.
+          example: Invalid, expired or revoked token
+        details:
+          type: object
+          additionalProperties: true
+          description: Optional safe context about the error.
