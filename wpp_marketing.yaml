@@ -1,449 +1,556 @@
 openapi: 3.0.3
+
 info:
-  title: WhatsApp Business API - WPP Marketing
-  description: |
-    WPP Marketing is a platform for automating WhatsApp Business messages.
-
-    With this API you can:
-    - Send text messages.
-    - Send media files (images, documents, etc).
-    - Retrieve sent message logs.
-    - Retrieve webhook delivery logs.
-
-    ### Authentication and scopes
-    Create an integration credential in API Developer > API Credentials and send
-    `Authorization: Bearer TOKEN`. Never use a WhatsApp provider token here.
-    Sending requires `messages:write`, message history requires `messages:read`,
-    and webhook history requires `webhooks:read`. Commerce events require `events:write`
-    and are documented in the separate Events API specification available on this page.
-
-    ### Sending and delivery
-    Sending uses the same configured connection and rules as the WPP Marketing panel.
-    HTTP 200 does not guarantee delivery: inspect message history and status webhooks.
-    Official text and image messages use the account's configured templates.
-    Official audio, video and documents require a customer-service window opened by
-    a message from the recipient within the preceding 24 hours. Provider restrictions
-    still apply, even when a format passes this API's URL validation.
-    There is no separate audio endpoint; use POST /send-media with media_type audio.
-    POST / is a legacy alias accepting text or media; new integrations should use
-    /send-text or /send-media.
-
-    ### Outbound webhooks
-    Register your public HTTPS endpoint and enable events in the WPP Marketing panel.
-    This API does not provide webhook registration endpoints. Incoming provider logs
-    are not GET /webhooks: that endpoint lists normalized outbound delivery records.
-    Only enabled events are stored and sent. The JSON contains id, event, timestamp
-    and message, using the WebhookEvent schema below; provider origin is not included.
-    Events are MESSAGE_CREATED, MESSAGE_DELIVERED, MESSAGE_READ and MESSAGE_ERROR.
-    Headers are Content-Type application/json, User-Agent WPPMarketing-Webhooks/1.0,
-    Webhook-Id (same as JSON id), and Webhook-Attempt (starting at 1).
-    No HMAC signature is currently sent. Respond with HTTP 2xx within 15 seconds;
-    redirects are not followed. Deduplicate using id and tolerate out-of-order events.
-    Connection failures, timeouts, HTTP 408, 425, 429 and 5xx are retried, up to seven
-    total attempts, with delays of 1 minute, 5 minutes, 15 minutes, 1 hour, 6 hours
-    and 24 hours. Retry-After is honored up to 24 hours. Other 4xx responses are final.
-    Completed delivered/failed records are retained for 30 days.
-
-    ### Rate limits
-    Default limits per 60-second window are 60 sends, 120 message-history requests,
-    120 webhook-history requests and 300 commerce events. Server configuration may
-    override these values. Inspect RateLimit-Limit, RateLimit-Remaining and
-    RateLimit-Reset; HTTP 429 also includes Retry-After in seconds.
-
-    For more information, visit [https://wppmarketing.com/developers](https://wppmarketing.com/developers)
+  title: WPP Marketing Events API
   version: 1.0.0
+  description: |
+    The WPP Marketing Events API enables businesses to send real-time events from
+    their e-commerce, ERP, or custom systems to automatically trigger WhatsApp
+    interactions with customers.
 
+    ### What you can automate
+
+    - Cart creation and abandoned carts
+    - Order lifecycle (created, paid, shipped, cancelled)
+    - Customer onboarding (new customers)
+    - Payment and shipping notifications
+
+    ### Supported events
+
+    The `event` field must contain one of the following values:
+
+    | Event | When to send it |
+    | --- | --- |
+    | `cart.created` | A customer creates or updates a shopping cart. |
+    | `cart.abandoned` | A cart is considered abandoned and can enter a recovery flow. |
+    | `order.created` | An order is created or is awaiting payment. |
+    | `order.paid` | Payment for an order is confirmed. |
+    | `order.shipped` | An order is shipped and tracking information is available. |
+    | `order.cancelled` | An order is cancelled. |
+    | `customer.created` | A new customer is created in the source system. |
+
+    Any other value is rejected with HTTP `422 Unsupported event`.
+
+    ### How it works
+
+    Each event sent to the API can trigger automated and personalized messages
+    via WhatsApp, allowing you to engage customers at the right moment without
+    manual intervention.
+
+    This helps increase conversion rates, recover abandoned sales, and improve
+    customer retention.
+
+    ### Integration
+
+    The API is designed to be flexible and can be integrated with:
+
+    - E-commerce platforms
+    - ERPs
+    - Custom systems
+    - Middleware or automation tools
+
+    Simply send structured event data and WPP Marketing will handle the automation layer.
+
+    ### Result
+
+    Transform transactional events into automated conversations that drive revenue
+    and scale customer engagement.
+    
+    For more information, visit [https://wppmarketing.com/developers](https://wppmarketing.com/developers)
 
 servers:
   - url: https://api.wppmarketing.com
     description: Production
 
+tags:
+  - name: Events
+    description: Send events to trigger WhatsApp automations
+
 paths:
-  /send-text:
+  /events/:
     post:
-      operationId: sendTextMessage
-      summary: Send Text Message
-      description: Sends text using the account's configured connection and, for official connections, its configured text template. Requires messages:write. HTTP 200 is not a delivery confirmation.
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TextMessage'
-      responses:
-        '200':
-          description: Message accepted by the configured WhatsApp connection
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessageResponse'
-        '400':
-          description: Invalid request or idempotency key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Missing or invalid token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Account disabled or scope insufficient
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: Idempotency key reused with a different request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '422':
-          description: Media fields are not allowed here or media_type was provided without a URL
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-        '502':
-          description: Message service unavailable or rejected the request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '503':
-          description: Idempotency or internal service unavailable
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /send-media:
-    post:
-      operationId: sendMediaMessage
-      summary: Send Media Message
+      tags:
+        - Events
+      summary: Send event
       description: |
-        Sends an image, audio, video or document to a WhatsApp number.
-        The media URL must use HTTPS, resolve only to public addresses and end with a supported extension.
-        Official connections use the configured image template for images. Audio, video and document
-        are sent as Cloud API session messages and therefore require an open customer-service window.
-        Requires messages:write. URLs are passed to the configured provider, not uploaded by this API.
-        Accepted URL extensions do not override the provider's codec, MIME, size or format restrictions.
+        Receives events from your system, ERP, or custom store to trigger
+        automations and automated WhatsApp messages.
+
+        Requires events:write. HTTP 200 confirms event processing, not WhatsApp delivery.
+        An enabled automation matching the event and valid customer data are needed
+        to send a message. Repeated events are deduplicated by account, normalized
+        source, event type and external_id (or order.id). A duplicate returns HTTP 200
+        with status ok and message "Duplicate event ignored", without sending again.
+        Idempotency-Key is not used by this endpoint. Source defaults to api;
+        origem takes precedence over source. metadata.source is not used for routing.
+
+        Supported values for `event`:
+
+        - `cart.created`
+        - `cart.abandoned`
+        - `order.created`
+        - `order.paid`
+        - `order.shipped`
+        - `order.cancelled`
+        - `customer.created`
+      operationId: sendEvent
       security:
         - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MediaMessage'
+              $ref: '#/components/schemas/EventRequest'
             examples:
-              imageWithCaption:
-                summary: Send an image
-                description: The body field is an optional caption and may be omitted.
+              cartCreated:
+                summary: Cart created
+                description: Event sent when a customer creates a cart.
                 value:
-                  number: '5511999999999'
-                  body: 'Your order is ready.'
-                  url_type: 'https://cdn.example.com/images/order-ready.jpg'
-                  media_type: image
-              document:
-                summary: Send a PDF document
-                description: The body field is an optional caption and may be omitted.
+                  event: cart.created
+                  external_id: CART-1001
+                  customer:
+                    id: "123"
+                    name: "João da Silva"
+                    phone: "5511999999999"
+                    email: "joao@email.com"
+                  order:
+                    id: CART-1001
+                    number: "1001"
+                    total: 149.90
+                    shipping: 0
+                    currency: BRL
+                    payment_method: ""
+                    link_payment: "https://pay.example.com/cart/1001"
+                    link_tracking: ""
+                  created_at: "2026-03-31T14:52:00Z"
+                  metadata:
+                    source: custom_store
+
+              cartAbandoned:
+                summary: Cart abandoned
+                description: Event sent when a cart is not completed.
                 value:
-                  number: '5511999999999'
-                  body: 'Your invoice.'
-                  url_type: 'https://cdn.example.com/documents/invoice.pdf'
-                  media_type: document
-              video:
-                summary: Send a video
-                description: The body field is an optional caption and may be omitted.
+                  event: cart.abandoned
+                  external_id: CART-1002
+                  customer:
+                    id: "124"
+                    name: "Maria Oliveira"
+                    phone: "5511988887777"
+                    email: "maria@email.com"
+                  order:
+                    id: CART-1002
+                    number: "1002"
+                    total: 259.90
+                    shipping: 19.90
+                    currency: BRL
+                    payment_method: ""
+                    link_payment: "https://pay.example.com/cart/1002"
+                    link_tracking: ""
+                  created_at: "2026-03-31T15:10:00Z"
+                  metadata:
+                    source: custom_store
+
+              orderCreated:
+                summary: Order created
+                description: Event sent when an order is created.
                 value:
-                  number: '5511999999999'
-                  body: 'Product demonstration.'
-                  url_type: 'https://cdn.example.com/video/demo.mp4'
-                  media_type: video
-              audio:
-                summary: Send an audio file
+                  event: order.created
+                  external_id: PED-1003
+                  customer:
+                    id: "125"
+                    name: "Carlos Souza"
+                    phone: "5511977776666"
+                    email: "carlos@email.com"
+                  order:
+                    id: PED-1003
+                    number: "1003"
+                    total: 89.90
+                    shipping: 0
+                    currency: BRL
+                    payment_method: pix
+                    link_payment: "https://pay.example.com/order/1003"
+                    link_tracking: ""
+                  created_at: "2026-03-31T15:35:00Z"
+                  metadata:
+                    source: custom_store
+
+              orderPaid:
+                summary: Order paid
+                description: Event sent when an order payment is confirmed.
                 value:
-                  number: '5511999999999'
-                  url_type: 'https://cdn.example.com/audio/customer-update.mp3'
-                  media_type: audio
+                  event: order.paid
+                  external_id: PED-1001
+                  customer:
+                    id: "123"
+                    name: "João da Silva"
+                    phone: "5511999999999"
+                    email: "joao@email.com"
+                  order:
+                    id: PED-1001
+                    number: "1001"
+                    total: 149.90
+                    shipping: 0
+                    currency: BRL
+                    payment_method: pix
+                    link_payment: "https://pay.example.com/123"
+                    link_tracking: ""
+                  created_at: "2026-03-31T14:52:00Z"
+                  metadata:
+                    source: custom_store
+
+              orderShipped:
+                summary: Order shipped
+                description: Event sent when an order is shipped.
+                value:
+                  event: order.shipped
+                  external_id: PED-1004
+                  customer:
+                    id: "126"
+                    name: "Fernanda Lima"
+                    phone: "5511966665555"
+                    email: "fernanda@email.com"
+                  order:
+                    id: PED-1004
+                    number: "1004"
+                    total: 199.90
+                    shipping: 24.90
+                    currency: BRL
+                    payment_method: credit_card
+                    link_payment: ""
+                    link_tracking: "https://tracking.example.com/TRK123456BR"
+                  created_at: "2026-03-31T16:05:00Z"
+                  metadata:
+                    source: custom_store
+                    tracking_number: TRK123456BR
+                    shipping_carrier: Correios
+
+              orderCancelled:
+                summary: Order cancelled
+                description: Event sent when an order is cancelled.
+                value:
+                  event: order.cancelled
+                  external_id: PED-1005
+                  customer:
+                    id: "127"
+                    name: "Ana Pereira"
+                    phone: "5511955554444"
+                    email: "ana@email.com"
+                  order:
+                    id: PED-1005
+                    number: "1005"
+                    total: 79.90
+                    shipping: 0
+                    currency: BRL
+                    payment_method: boleto
+                    link_payment: ""
+                    link_tracking: ""
+                  created_at: "2026-03-31T16:20:00Z"
+                  metadata:
+                    source: custom_store
+                    cancel_reason: customer_request
+
+              customerCreated:
+                summary: Customer created
+                description: Event sent when a new customer is created.
+                value:
+                  event: customer.created
+                  external_id: CUS-1001
+                  customer:
+                    id: "128"
+                    name: "Lucas Martins"
+                    phone: "5511944443333"
+                    email: "lucas@email.com"
+                  created_at: "2026-03-31T16:40:00Z"
+                  metadata:
+                    source: custom_store
+
       responses:
         '200':
-          description: Media message accepted by the configured WhatsApp connection
+          description: Event received successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
+                $ref: '#/components/schemas/EventSuccessResponse'
+              examples:
+                success:
+                  summary: Success
+                  value:
+                    status: ok
+                    message: Event received successfully
+                    event: order.paid
+                    external_id: PED-1001
+                    origem: api
+                duplicate:
+                  summary: Duplicate event ignored
+                  value:
+                    status: ok
+                    message: Duplicate event ignored
+
         '400':
-          description: Invalid request or idempotency key
+          description: Empty body or invalid JSON
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidJson:
+                  summary: Invalid JSON
+                  value:
+                    status: error
+                    code: invalid_json
+                    message: Request body must contain valid JSON
+
         '401':
           description: Missing or invalid token
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unauthorized:
+                  summary: Unauthorized
+                  value:
+                    status: error
+                    code: invalid_token
+                    message: Invalid, expired or revoked token
+
         '403':
-          description: Account disabled or scope insufficient
+          description: Company is disabled or credential lacks events:write
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: Idempotency key reused with a different request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                forbidden:
+                  summary: Company disabled
+                  value:
+                    status: error
+                    code: account_disabled
+                    message: Account disabled
+
         '422':
-          description: Invalid media URL, type or file format
+          description: Unsupported event or missing required fields
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                unsupportedEvent:
+                  summary: Unsupported event
+                  value:
+                    status: error
+                    code: unsupported_event
+                    message: Unsupported event
+                    details:
+                      event: order.refunded
+
+                missingField:
+                  summary: Missing required field
+                  value:
+                    status: error
+                    code: event_required
+                    message: Field "event" is required
+
         '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-        '502':
-          description: Message service unavailable or rejected the request
+          description: Request limit exceeded. Retry after the number of seconds indicated by Retry-After.
+          headers:
+            Retry-After:
+              description: Seconds until the current rate-limit window resets.
+              schema:
+                type: integer
+            RateLimit-Limit:
+              description: Maximum requests allowed in the current window.
+              schema:
+                type: integer
+            RateLimit-Remaining:
+              description: Requests remaining in the current window.
+              schema:
+                type: integer
+            RateLimit-Reset:
+              description: Seconds until the current window resets.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: error
+                code: rate_limit_exceeded
+                message: Rate limit exceeded
+
+        '500':
+          description: Internal error while processing the event
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
         '503':
-          description: Idempotency or internal service unavailable
+          description: Server temporarily unavailable or event lock could not be acquired
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
-  /messages:
-    get:
-      summary: Retrieve Sent Messages
-      operationId: listMessages
-      description: Returns the authenticated account's local WPP Marketing message records, newest first, using offset pagination. Requires messages:read. Status and type are platform values, including automation labels; they are not restricted to the sending endpoint's media categories. Destination numbers may retain a leading plus sign. An empty history returns itens [] and max 0.
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: List of sent messages
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MessagesResponse'
-              example:
-                max: 27
-                itens:
-                  - id: 417452
-                    status: Sucesso
-                    delivery_status: READ
-                    to: "555181721240"
-                    body: "Hello! This is a plain text message."
-                    type: text
-                    media_url: null
-                    message_id: "3EB0191CBAFD6A71DD7696"
-                    error_code: null
-                    meta_error_code: null
-                    error_message: null
-                    official_api: true
-                    automation_id: 42
-                    created: "2025-08-04T21:13:31Z"
-                    updated: "2025-08-04T21:13:37Z"
-                pagination:
-                  limit: 1
-                  offset: 0
-                  count: 1
-                  total: 27
-                  has_more: true
-                  next_offset: 1
-        '400':
-          description: Invalid pagination parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Missing or invalid token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Account disabled or scope insufficient
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-        '500':
-          description: Unable to retrieve messages
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /webhooks:
-    get:
-      operationId: listWebhookDeliveries
-      summary: Retrieve Webhook Deliveries
-      description: |
-        Returns the authenticated account's webhook delivery history using offset pagination.
-        Events use the same public contract regardless of which WhatsApp connection originated them.
-        Provider details are never returned.
-        Requires webhooks:read. Records are newest first. An empty history returns itens [] and max 0.
-      security:
-        - bearerAuth: []
-      parameters:
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
-      responses:
-        '200':
-          description: List of webhook deliveries
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/WebhookDeliveriesResponse'
-              example:
-                max: 12
-                itens:
-                  - id: evt_0123456789abcdef0123456789abcdef
-                    event: MESSAGE_DELIVERED
-                    timestamp: '2026-09-15T10:30:00Z'
-                    message:
-                      id: msg_123
-                      status: delivered
-                      phone: '5511999999999'
-                    delivery:
-                      endpoint: https://example.com/webhooks/wpp
-                      status: delivered
-                      attempts: 1
-                      http_status: 204
-                      last_error: null
-                      next_attempt_at: null
-                      last_attempt_at: '2026-09-15T10:30:04Z'
-                      delivered_at: '2026-09-15T10:30:04Z'
-                    created: '2026-09-15T10:30:00Z'
-                    updated: '2026-09-15T10:30:04Z'
-                pagination:
-                  limit: 1
-                  offset: 0
-                  count: 1
-                  total: 12
-                  has_more: true
-                  next_offset: 1
-        '400':
-          description: Invalid pagination parameters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Missing or invalid token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '403':
-          description: Account disabled or webhooks:read scope insufficient
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '429':
-          $ref: '#/components/responses/RateLimitExceeded'
-        '500':
-          description: Unable to retrieve webhook deliveries
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                serviceUnavailable:
+                  summary: Server busy
+                  value:
+                    status: error
+                    code: server_busy
+                    message: Server is temporarily busy. Please try again later.
+                eventLocked:
+                  summary: Matching event is still being processed
+                  value:
+                    status: error
+                    code: event_lock_unavailable
+                    message: Event is already being processed. Please retry shortly
 
 components:
-  responses:
-    RateLimitExceeded:
-      description: Request limit exceeded. Retry after the number of seconds indicated by Retry-After.
-      headers:
-        Retry-After:
-          description: Seconds until the current rate-limit window resets.
-          schema:
-            type: integer
-        RateLimit-Limit:
-          description: Maximum requests allowed in the current window.
-          schema:
-            type: integer
-        RateLimit-Remaining:
-          description: Requests remaining in the current window.
-          schema:
-            type: integer
-        RateLimit-Reset:
-          description: Seconds until the current window resets.
-          schema:
-            type: integer
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-          example:
-            status: error
-            code: rate_limit_exceeded
-            message: Rate limit exceeded
-
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: Token
-      description: Use a scoped integration credential. Required scopes are messages:write, messages:read or webhooks:read according to the operation.
-
-  parameters:
-    Limit:
-      name: limit
-      in: query
-      required: false
-      description: Number of records returned. Defaults to 100 and cannot exceed 200.
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 200
-        default: 100
-    Offset:
-      name: offset
-      in: query
-      required: false
-      description: Number of records to skip before returning results.
-      schema:
-        type: integer
-        minimum: 0
-        maximum: 1000000
-        default: 0
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: false
-      description: Optional key scoped to the account and endpoint for retrying the same request for 48 hours. Replays return the cached successful response. Reusing it with different normalized request data returns HTTP 409. Without this header, repeated requests may send multiple messages. Provider failures are not cached; delivery webhooks can report asynchronous failure after HTTP 200.
-      schema:
-        type: string
-        maxLength: 128
-        pattern: '^[A-Za-z0-9._:-]+$'
+      description: Use a scoped integration credential with events:write.
 
   schemas:
+    EventRequest:
+      type: object
+      required:
+        - event
+      anyOf:
+        - required:
+            - external_id
+        - required:
+            - order
+          properties:
+            order:
+              required:
+                - id
+      properties:
+        event:
+          type: string
+          description: Event type sent to the API.
+          enum:
+            - cart.created
+            - cart.abandoned
+            - order.created
+            - order.paid
+            - order.shipped
+            - order.cancelled
+            - customer.created
+          example: order.paid
+
+        external_id:
+          type: string
+          description: Unique external identifier for the event or order. Required when `order.id` is not provided.
+          example: PED-1001
+
+        source:
+          type: string
+          description: Source system identifier. Use lowercase letters, numbers, hyphens or underscores.
+          maxLength: 50
+          example: erp
+
+        origem:
+          type: string
+          description: Alternative field name accepted for `source`.
+          maxLength: 50
+          example: custom_store
+
+        customer:
+          type: object
+          description: Customer data related to the event.
+          properties:
+            id:
+              type: string
+              example: "123"
+            name:
+              type: string
+              example: João da Silva
+            phone:
+              type: string
+              example: "5511999999999"
+            email:
+              type: string
+              format: email
+              example: joao@email.com
+            country:
+              type: string
+              description: Two-letter country code.
+              example: BR
+            state:
+              type: string
+              example: SP
+            city:
+              type: string
+              example: São Paulo
+
+        order:
+          type: object
+          description: Order or cart data when applicable. `order.id` can be used instead of `external_id`.
+          properties:
+            id:
+              type: string
+              example: PED-1001
+            number:
+              type: string
+              example: "1001"
+            total:
+              type: number
+              format: float
+              example: 149.90
+            shipping:
+              type: number
+              format: float
+              example: 0
+            currency:
+              type: string
+              example: BRL
+            payment_method:
+              type: string
+              example: pix
+            link_payment:
+              type: string
+              example: https://pay.example.com/123
+            link_tracking:
+              type: string
+              example: https://tracking.example.com/TRK123456BR
+
+        created_at:
+          type: string
+          format: date-time
+          description: Event date and time in ISO 8601 format.
+          example: "2026-03-31T14:52:00Z"
+
+        metadata:
+          type: object
+          description: Additional free-form metadata sent by the integrator.
+          additionalProperties: true
+          example:
+            source: custom_store
+
+    EventSuccessResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: ok
+        message:
+          type: string
+          example: Event received successfully
+        event:
+          type: string
+          example: order.paid
+        external_id:
+          type: string
+          example: PED-1001
+        origem:
+          type: string
+          description: Normalized source associated with the received event.
+          example: erp
+
     ErrorResponse:
       type: object
       required:
@@ -466,342 +573,3 @@ components:
           type: object
           additionalProperties: true
           description: Optional safe context about the error.
-
-    TextMessage:
-      type: object
-      required:
-        - number
-        - body
-      properties:
-        number:
-          type: string
-          description: Destination with country code. Non-digit characters are removed before sending.
-          example: '5511999999999'
-        body:
-          type: string
-          example: 'Hello! This is a plain text message.'
-
-    MediaMessage:
-      type: object
-      required:
-        - number
-        - url_type
-      properties:
-        number:
-          type: string
-          example: '5511999999999'
-        body:
-          type: string
-          description: Optional caption, supplied in the body field (not a caption request field). May be omitted for any media category. Official audio messages do not include a caption.
-          example: 'Check out this image!'
-        url_type:
-          type: string
-          format: uri
-          pattern: '^https://'
-          maxLength: 2048
-          description: |
-            Public HTTPS URL ending with a supported extension.
-            Images: JPG, JPEG, PNG, GIF, WEBP.
-            Audio: MP3, WAV, OGG.
-            Video: MP4.
-            Documents: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, TXT, ZIP, RAR.
-          example: 'https://yoursite.com/image.jpg'
-        media_type:
-          type: string
-          description: Optional explicit media category. When provided, it must match the URL extension.
-          enum:
-            - image
-            - audio
-            - video
-            - document
-          example: image
-
-    MessageResponse:
-      type: object
-      required: [status, to, body, type, media_url, caption]
-      description: Platform response, not a raw provider response. Record fields are present when a matching local record is available. Delivery is asynchronous; HTTP 200 alone does not mean delivered.
-      properties:
-        status:
-          type: string
-          example: Sucesso
-        to:
-          type: string
-        body:
-          type: string
-        type:
-          type: string
-          enum: [text, image, audio, video, document]
-        media_url:
-          type: string
-          nullable: true
-        delivery_status:
-          type: string
-          example: SENT
-        message_id:
-          type: string
-          nullable: true
-        official_api:
-          type: boolean
-        caption:
-          type: string
-          nullable: true
-        id:
-          type: integer
-        created:
-          type: string
-          format: date-time
-          nullable: true
-        updated:
-          type: string
-          format: date-time
-          nullable: true
-      example:
-        id: 1001
-        status: Sucesso
-        delivery_status: SENT
-        to: '5511999999999'
-        body: 'Your order is ready.'
-        type: image
-        media_url: 'https://cdn.example.com/images/order-ready.jpg'
-        caption: 'Your order is ready.'
-        message_id: wamid.EXAMPLE
-        official_api: true
-        created: '2026-09-18T14:00:00Z'
-        updated: null
-
-    MessagesResponse:
-      type: object
-      properties:
-        max:
-          type: integer
-        itens:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-              status:
-                type: string
-              delivery_status:
-                type: string
-              to:
-                type: string
-              body:
-                type: string
-              type:
-                type: string
-              media_url:
-                type: string
-                nullable: true
-              message_id:
-                type: string
-                nullable: true
-              error_code:
-                type: string
-                nullable: true
-              meta_error_code:
-                type: string
-                nullable: true
-              error_message:
-                type: string
-                nullable: true
-              official_api:
-                type: boolean
-              automation_id:
-                type: integer
-                nullable: true
-              created:
-                type: string
-                format: date-time
-                nullable: true
-              updated:
-                type: string
-                format: date-time
-                nullable: true
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    WebhookDeliveriesResponse:
-      type: object
-      required:
-        - max
-        - itens
-        - pagination
-      properties:
-        max:
-          type: integer
-          description: Total webhook delivery records for the authenticated account.
-        itens:
-          type: array
-          items:
-            $ref: '#/components/schemas/WebhookDelivery'
-        pagination:
-          $ref: '#/components/schemas/Pagination'
-
-    WebhookEvent:
-      type: object
-      required: [id, event, timestamp, message]
-      properties:
-        id:
-          type: string
-          description: Stable event identifier; also sent in Webhook-Id. Use for deduplication.
-        event:
-          type: string
-          enum: [MESSAGE_CREATED, MESSAGE_DELIVERED, MESSAGE_READ, MESSAGE_ERROR]
-        timestamp:
-          type: string
-          format: date-time
-        message:
-          $ref: '#/components/schemas/WebhookMessage'
-      example:
-        id: evt_0123456789abcdef0123456789abcdef
-        event: MESSAGE_ERROR
-        timestamp: '2026-09-18T14:00:00Z'
-        message:
-          id: wamid.EXAMPLE
-          status: error
-          phone: '5511999999999'
-          error: 'Message could not be delivered.'
-
-    WebhookDelivery:
-      type: object
-      required:
-        - id
-        - event
-        - timestamp
-        - message
-        - delivery
-        - created
-        - updated
-      properties:
-        id:
-          type: string
-          description: Stable identifier for this logical event.
-          example: evt_0123456789abcdef0123456789abcdef
-        event:
-          type: string
-          enum:
-            - MESSAGE_CREATED
-            - MESSAGE_DELIVERED
-            - MESSAGE_READ
-            - MESSAGE_ERROR
-        timestamp:
-          type: string
-          format: date-time
-          description: Time when the message event occurred.
-        message:
-          $ref: '#/components/schemas/WebhookMessage'
-        delivery:
-          $ref: '#/components/schemas/WebhookDeliveryResult'
-        created:
-          type: string
-          format: date-time
-          description: Time when the delivery record was created.
-        updated:
-          type: string
-          format: date-time
-          description: Time when the delivery record was last updated.
-
-    WebhookMessage:
-      type: object
-      required:
-        - id
-        - status
-      properties:
-        id:
-          type: string
-          description: Message identifier used to correlate status updates.
-        status:
-          type: string
-          enum:
-            - created
-            - delivered
-            - read
-            - error
-        phone:
-          type: string
-          pattern: '^[0-9]+$'
-          description: Destination number containing digits only, when available.
-        error:
-          type: string
-          description: Normalized error description, returned only for MESSAGE_ERROR when available.
-
-    WebhookDeliveryResult:
-      type: object
-      required:
-        - endpoint
-        - status
-        - attempts
-        - http_status
-        - last_error
-        - next_attempt_at
-        - last_attempt_at
-        - delivered_at
-      properties:
-        endpoint:
-          type: string
-          format: uri
-          description: Customer endpoint used for the delivery.
-        status:
-          type: string
-          enum:
-            - pending
-            - processing
-            - retry
-            - delivered
-            - failed
-        attempts:
-          type: integer
-          minimum: 0
-        http_status:
-          type: integer
-          nullable: true
-          minimum: 100
-          maximum: 599
-        last_error:
-          type: string
-          nullable: true
-        next_attempt_at:
-          type: string
-          format: date-time
-          nullable: true
-        last_attempt_at:
-          type: string
-          format: date-time
-          nullable: true
-        delivered_at:
-          type: string
-          format: date-time
-          nullable: true
-
-    Pagination:
-      type: object
-      required:
-        - limit
-        - offset
-        - count
-        - has_more
-        - next_offset
-      properties:
-        limit:
-          type: integer
-          example: 100
-        offset:
-          type: integer
-          example: 0
-        count:
-          type: integer
-          example: 100
-        total:
-          type: integer
-          nullable: true
-          description: Total records reported by the internal service when available.
-          example: 245
-        has_more:
-          type: boolean
-          example: true
-        next_offset:
-          type: integer
-          nullable: true
-          example: 100
