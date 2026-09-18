@@ -76,6 +76,14 @@ paths:
         Receives events from your system, ERP, or custom store to trigger
         automations and automated WhatsApp messages.
 
+        Requires events:write. HTTP 200 confirms event processing, not WhatsApp delivery.
+        An enabled automation matching the event and valid customer data are needed
+        to send a message. Repeated events are deduplicated by account, normalized
+        source, event type and external_id (or order.id). A duplicate returns HTTP 200
+        with status ok and message "Duplicate event ignored", without sending again.
+        Idempotency-Key is not used by this endpoint. Source defaults to api;
+        origem takes precedence over source. metadata.source is not used for routing.
+
         Supported values for `event`:
 
         - `cart.created`
@@ -272,6 +280,12 @@ paths:
                     message: Event received successfully
                     event: order.paid
                     external_id: PED-1001
+                    origem: api
+                duplicate:
+                  summary: Duplicate event ignored
+                  value:
+                    status: ok
+                    message: Duplicate event ignored
 
         '400':
           description: Empty body or invalid JSON
@@ -302,7 +316,7 @@ paths:
                     message: Invalid, expired or revoked token
 
         '403':
-          description: Company is disabled
+          description: Company is disabled or credential lacks events:write
           content:
             application/json:
               schema:
@@ -366,6 +380,12 @@ paths:
                 code: rate_limit_exceeded
                 message: Rate limit exceeded
 
+        '500':
+          description: Internal error while processing the event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '503':
           description: Server temporarily unavailable or event lock could not be acquired
           content:
